@@ -152,7 +152,7 @@ post '/capture_payment_intent' do
     end
 
     # 🔹 Log the full PaymentIntent response
-    log.info("Full PaymentIntent Response: #{payment_intent.to_json}")
+    log_info("Full PaymentIntent Response: #{payment_intent.to_json}")
 
     # 🔹 Extract and log card details (last 4 digits)
     if payment_intent.charges && payment_intent.charges.data.any?
@@ -161,10 +161,10 @@ post '/capture_payment_intent' do
         last4 = charge.payment_method_details.card.last4
         brand = charge.payment_method_details.card.brand
 
-        log.info("Card Brand: #{brand}")
-        log.info("Last 4 Digits: #{last4}")
+        log_info("Card Brand: #{brand}")
+        log_info("Last 4 Digits: #{last4}")
       else
-        log.info("No card details found in PaymentIntent")
+        log_info("No card details found in PaymentIntent")
       end
     end
 

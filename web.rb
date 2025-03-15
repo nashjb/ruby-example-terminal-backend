@@ -150,16 +150,40 @@ post '/capture_payment_intent' do
     else
       payment_intent = Stripe::PaymentIntent.capture(id)
     end
+
+    # 🔹 Log the full PaymentIntent response
+    log.info("Full PaymentIntent Response: #{payment_intent.to_json}")
+
+    # 🔹 Extract and log card details (last 4 digits)
+    if payment_intent.charges && payment_intent.charges.data.any?
+      charge = payment_intent.charges.data.first
+      if charge.payment_method_details&.card
+        last4 = charge.payment_method_details.card.last4
+        brand = charge.payment_method_details.card.brand
+
+        log.info("Card Brand: #{brand}")
+        log.info("Last 4 Digits: #{last4}")
+      else
+        log.info("No card details found in PaymentIntent")
+      end
+    end
+
   rescue Stripe::StripeError => e
+    log.error("Error capturing PaymentIntent! #{e.message}")
     status 402
-    return log_info("Error capturing PaymentIntent! #{e.message}")
+    return ("Error capturing PaymentIntent! #{e.message}")
   end
 
   log_info("PaymentIntent successfully captured: #{id}")
-  # Optionally reconcile the PaymentIntent with your internal order system.
+
   status 200
-  return {:intent => payment_intent.id, :secret => payment_intent.client_secret}.to_json
+  return {
+    intent: payment_intent.id,
+    secret: payment_intent.client_secret,
+    full_data: payment_intent
+  }.to_json
 end
+
 
 # This endpoint cancels a PaymentIntent.
 # https://stripe.com/docs/api/payment_intents/cancel
